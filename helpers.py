@@ -1,6 +1,8 @@
 from sklearn.metrics import confusion_matrix, roc_auc_score
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 import seaborn as sns
 from keras.utils import to_categorical
 
@@ -66,9 +68,22 @@ def plot_confusion_matrix(eval_predicted, eval_labels, title, uid):
     plt.savefig("img/cm_{}.png".format(uid))
     plt.show()
 
+
 def compute_AUC_scores(eval_predicted_proba, eval_labels):
     onehot = to_categorical(eval_labels).astype(int) # Splits into classes from 0-10 (11 classes)
     eval_onehot = onehot[:, 1:]  # Trim unnecessary first column (class "0")
     weighted_auc = roc_auc_score(eval_onehot, eval_predicted_proba, average='weighted')
     macro_auc = roc_auc_score(eval_onehot, eval_predicted_proba, average='macro')
     print("Weighted AUC: {:.5f}, Macro AUC: {:.5f}".format(weighted_auc, macro_auc))
+
+
+def visualize_feature_importances():
+    '''Plot feature importances of random forest classifier'''
+    model = pickle.load(open('models/RandomForest_scaled=True_drop=False_remarks=Unweighted.mdl', 'rb'))
+    f = model.feature_importances_
+    colors = matplotlib.cm.hsv(f / float(max(f)))
+    plt.bar(range(264), f, color=colors, alpha=0.5)
+    plt.xlabel("Features")
+    plt.ylabel("Feature importance")
+    plt.title("Feature importances of RandomForest classifier")
+    plt.show()
