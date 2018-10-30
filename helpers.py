@@ -21,11 +21,37 @@ def construct_kaggle_submissions(uid, results, results_proba):
     indices = np.arange(1, results.shape[0] + 1)
     labeled_results = np.append(indices[:,None], results[:,None], axis=1)
     np.savetxt("submissions/accuracy_{}.csv".format(uid),
-               labeled_results, delimiter=",", fmt="%d", 
+               labeled_results, delimiter=",", fmt="%d",
                header="Sample_id,Sample_label",
                comments='')
 
-def plot_confusion_matrix(eval_predicted, eval_labels, model, uid):
+def construct_pop_rock_kaggle_submissions(uid='pop_rock'):
+    results = [1] * 6544
+    results = np.array(results)
+    results_proba = [[1] + [0] * 9 for i in range(6544)]
+    results_proba = np.array(results_proba)
+    print(results_proba.shape)
+    ########## Submission
+    # For logloss submission
+    # Label each row to match Kaggle submission format
+    indices = np.arange(1, results_proba.shape[0] + 1)
+    labeled_results_proba = np.append(indices[:,None], results_proba, axis=1)
+
+    np.savetxt("submissions/logloss_{}.csv".format(uid),
+               labeled_results_proba, fmt="%d" + 10 * ", %f",
+               header="Sample_id,Class_1,Class_2,Class_3,Class_4,Class_5,Class_6,Class_7,Class_8,Class_9,Class_10",
+               comments='')
+
+    # For accuracy submission
+    # Label each row to match Kaggle submission format
+    indices = np.arange(1, results.shape[0] + 1)
+    labeled_results = np.append(indices[:,None], results[:,None], axis=1)
+    np.savetxt("submissions/accuracy_{}.csv".format(uid),
+               labeled_results, delimiter=",", fmt="%d",
+               header="Sample_id,Sample_label",
+               comments='')
+
+def plot_confusion_matrix(eval_predicted, eval_labels, title, uid):
     cm = confusion_matrix(eval_labels, eval_predicted)
     # Get proportions per true class (row)
     sums_per_row = cm.sum(axis=1)
@@ -36,7 +62,7 @@ def plot_confusion_matrix(eval_predicted, eval_labels, model, uid):
     fontsize=14
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.title('{} - Confusion matrix'.format(model))
+    plt.title('{} - Confusion matrix'.format(title))
     plt.savefig("img/cm_{}.png".format(uid))
     plt.show()
 
