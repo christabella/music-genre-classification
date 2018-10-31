@@ -32,7 +32,6 @@ def construct_pop_rock_kaggle_submissions(uid='pop_rock'):
     results = np.array(results)
     results_proba = [[1] + [0] * 9 for i in range(6544)]
     results_proba = np.array(results_proba)
-    print(results_proba.shape)
     ########## Submission
     # For logloss submission
     # Label each row to match Kaggle submission format
@@ -77,13 +76,25 @@ def compute_AUC_scores(eval_predicted_proba, eval_labels):
     print("Weighted AUC: {:.5f}, Macro AUC: {:.5f}".format(weighted_auc, macro_auc))
 
 
-def visualize_feature_importances():
+def visualize_feature_importances(model='rf'):
     '''Plot feature importances of random forest classifier'''
-    model = pickle.load(open('models/RandomForest_scaled=True_drop=False_remarks=Unweighted.mdl', 'rb'))
+    plt.figure(figsize=(14, 6))
+    if model == 'rf':
+        file = 'models/RandomForest_scaled=True_drop=False_remarks=Unweighted.mdl'
+        title = 'Random Forest'
+    elif model == 'xgb':
+        file = 'models/XGBoost_scaled=False_n=100.mdl'
+        title = 'XGBoost'
+    model = pickle.load(open(file, 'rb'))
     f = model.feature_importances_
     colors = matplotlib.cm.hsv(f / float(max(f)))
     plt.bar(range(264), f, color=colors, alpha=0.5)
     plt.xlabel("Features")
     plt.ylabel("Feature importance")
-    plt.title("Feature importances of RandomForest classifier")
+    plt.vlines([0.5, 168.5, 216.5], 0, 1.1 * max(f), linestyles='dashed', linewidth=1, label=['a', 'b', 'c'])
+    plt.text(0.5 + 1, 1.1*max(f) - 1e-3, "Rhythm Pattern")
+    plt.text(168.5 + 1, 1.1*max(f) - 1e-3, "Chroma")
+    plt.text(216.5 + 1, 1.1*max(f) - 1e-3, "MFCC's")
+    plt.title("Feature importances of {} classifier".format(title))
+    plt.savefig("img/feature_importances_{}.png".format(model))
     plt.show()
