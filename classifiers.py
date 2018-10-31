@@ -64,7 +64,7 @@ elif args.model == "RandomForest":
     model = RandomForestClassifier(bootstrap=True, criterion="entropy", max_features=0.4, min_samples_leaf=4, min_samples_split=12, n_estimators=100, verbose=3, class_weight='balanced')
     model.fit(train_data, train_labels)
 elif args.model == "SVC":
-    model = LinearSVC(C=1.0, dual=False, loss="squared_hinge", penalty="l2", tol=1e-4, verbose=3)
+    model = LinearSVC(C=1.0, dual=False, loss="squared_hinge", penalty="l1", tol=1e-4, verbose=3)
     model = CalibratedClassifierCV(model)
     model.fit(train_data, train_labels)
 elif args.model == "KNN":
