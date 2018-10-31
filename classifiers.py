@@ -70,9 +70,9 @@ elif args.model == "SVC":
 elif args.model == "KNN":
     model = KNeighborsClassifier(n_neighbors=args.neighbors)
     model.fit(train_data, train_labels)
-results_proba = model.predict_proba(test_data)
 
 results = model.predict(test_data)  # Predicts from 1-10
+results_proba = model.predict_proba(test_data)
 
 # if args.model != "SVC":  # SVC doesn't implement predict_proba so CV is not possible
 kfold = StratifiedKFold(n_splits=3, random_state=7)

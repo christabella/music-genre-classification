@@ -1,6 +1,7 @@
 from sklearn.metrics import confusion_matrix, roc_auc_score
 import matplotlib
 import matplotlib.pyplot as plt
+import tensorflow as tf
 import numpy as np
 import pickle
 import seaborn as sns
@@ -73,7 +74,7 @@ def compute_AUC_scores(eval_predicted_proba, eval_labels):
     eval_onehot = onehot[:, 1:]  # Trim unnecessary first column (class "0")
     weighted_auc = roc_auc_score(eval_onehot, eval_predicted_proba, average='weighted')
     macro_auc = roc_auc_score(eval_onehot, eval_predicted_proba, average='macro')
-    print("Weighted AUC: {:.5f}, Macro AUC: {:.5f}".format(weighted_auc, macro_auc))
+    print("Weighted and Macro AUC: {:.5f}/{:.5f}".format(weighted_auc, macro_auc))
 
 
 def visualize_feature_importances(model='rf'):
@@ -98,3 +99,20 @@ def visualize_feature_importances(model='rf'):
     plt.title("Feature importances of {} classifier".format(title))
     plt.savefig("img/feature_importances_{}.png".format(title))
     plt.show()
+
+import numpy as np
+
+def log_loss(lbls,preds,norm=True):
+    if norm:
+        for i in range(len(preds)):
+            preds[i] = preds[i]/np.sum(preds[i])
+    predictions = tf.Variable(np.array(preds))
+    labels = tf.Variable(np.array(lbls))
+
+    loss = tf.losses.log_loss(labels,predictions)
+    init = tf.initialize_all_variables()
+    with tf.Session() as sess:
+        sess.run(init)
+        losses = sess.run(loss)
+    print(losses)
+    return losses
