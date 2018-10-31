@@ -1,9 +1,12 @@
 import argparse
 import numpy as np
 import pandas as pd
+from keras.utils import to_categorical
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, log_loss
 from sklearn.model_selection import cross_val_score, train_test_split, StratifiedKFold
+from sklearn.svm import LinearSVC
 from sklearn.preprocessing import MinMaxScaler
 from xgboost import XGBClassifier
 import pickle
@@ -41,28 +44,44 @@ train_data, eval_data, train_labels, eval_labels = \
 eval_set = [(train_data, train_labels), (eval_data, eval_labels)]
 
 if args.model == "XGBoost":
-
     model = XGBClassifier(learning_rate=0.1, max_depth=5,
                       min_child_weight=7, n_estimators=100, nthread=1, subsample=0.7,
                       objective='multi:softprob', num_class=10)
     model.fit(train_data, train_labels,
               eval_metric=["merror", "mlogloss"], eval_set=eval_set,
               verbose=True)
+    results_proba = model.predict_proba(test_data)
+    eval_predicted_proba = model.predict_proba(eval_data)
 elif args.model == "RandomForest":
     model = RandomForestClassifier(bootstrap=True, criterion="entropy", max_features=0.4, min_samples_leaf=4, min_samples_split=12, n_estimators=100, verbose=3, class_weight='balanced')
     model.fit(train_data, train_labels)
-
+    results_proba = model.predict_proba(test_data)
+    eval_predicted_proba = model.predict_proba(eval_data)
+elif args.model == "SVC":
+    model = LinearSVC(C=1.0, dual=False, loss="squared_hinge", penalty="l1", tol=0.01, verbose=3)
+    model.fit(train_data, train_labels)
+    results_proba = model.decision_function(test_data)
+    eval_predicted_proba = model.decision_function(eval_data)
 
 results = model.predict(test_data)  # Predicts from 1-10
-results_proba = model.predict_proba(test_data)
+eval_predicted = model.predict(eval_data)
 
-kfold = StratifiedKFold(n_splits=3, random_state=7)
-scores = cross_val_score(model, train_data, train_labels,
-                         cv=kfold, scoring="neg_log_loss")
-accuracy_scores = cross_val_score(model, train_data, train_labels,
-                         cv=kfold, scoring="accuracy")
-print("Cross validation logloss scores: {:.5f} {:.5f}".format(np.mean(scores), np.std(scores)))
-print("Cross validation accuracy scores: {:.5f} {:.5f}".format(np.mean(accuracy_scores), np.std(accuracy_scores)))
+if args.model != "SVC":  # SVC doesn't implement predict_proba so CV is not possible
+    kfold = StratifiedKFold(n_splits=3, random_state=7)
+    scores = cross_val_score(model, train_data, train_labels,
+                             cv=kfold, scoring="neg_log_loss")
+    accuracy_scores = cross_val_score(model, train_data, train_labels,
+                             cv=kfold, scoring="accuracy")
+    print("Cross validation logloss scores: {:.5f} {:.5f}".format(np.mean(scores),
+                                                                  np.std(scores)))
+    print("Cross validation accuracy scores: {:.5f} {:.5f}".format(np.mean(accuracy_scores),
+                                                                   np.std(accuracy_scores)))
+
+onehot = to_categorical(eval_labels).astype(int) # Splits into classes from 0-10 (11 classes)
+eval_onehot = onehot[:, 1:]  # Trim unnecessary first column (class "0")
+ll = log_loss(eval_onehot, eval_predicted_proba)
+acc = accuracy_score(eval_labels, eval_predicted)
+print("Validation log-loss and accuracy: {:.5f} {:.5f}".format(ll, acc))
 
 uid = "{}_scaled={}_drop={}_remarks={}".format(args.model, args.scale, args.drop, args.remarks)
 
@@ -98,9 +117,7 @@ model_file = open("models/{}.mdl".format(uid), "wb")
 pickle.dump(model, model_file)
 
 # Confusion matrix
-eval_predicted = model.predict(eval_data)
 plot_confusion_matrix(eval_predicted, eval_labels, args.model, uid)
 
 # AUC ROC scores
-eval_predicted_proba = model.predict_proba(eval_data)
 compute_AUC_scores(eval_predicted_proba, eval_labels)

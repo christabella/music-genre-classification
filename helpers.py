@@ -96,5 +96,5 @@ def visualize_feature_importances(model='rf'):
     plt.text(168.5 + 1, 1.1*max(f) - 1e-3, "Chroma")
     plt.text(216.5 + 1, 1.1*max(f) - 1e-3, "MFCC's")
     plt.title("Feature importances of {} classifier".format(title))
-    plt.savefig("img/feature_importances_{}.png".format(model))
+    plt.savefig("img/feature_importances_{}.png".format(title))
     plt.show()
