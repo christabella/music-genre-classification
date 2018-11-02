@@ -51,14 +51,19 @@ if not args.final:
 
 if args.model == "XGBoost":
     model = XGBClassifier(learning_rate=0.1, max_depth=5,
-                      min_child_weight=7, n_estimators=100, nthread=1, subsample=0.7,
-                      objective='multi:softprob', num_class=10)
+                          min_child_weight=7, n_estimators=1000, nthread=1,
+                          # subsample=0.8, colsample_bytree=0.4,
+                          subsample=0.7,
+                          objective='multi:softprob', num_class=10,
+                          gamma=1
+)
     if args.final:
         model.fit(train_data, train_labels,
                   verbose=True)
     else:
         model.fit(train_data, train_labels,
                   eval_metric=["merror", "mlogloss"], eval_set=eval_set,
+                  early_stopping_rounds=10,
                   verbose=True)
 elif args.model == "RandomForest":
     model = RandomForestClassifier(bootstrap=True, criterion="entropy", max_features=0.4, min_samples_leaf=4, min_samples_split=12, n_estimators=100, verbose=3, class_weight='balanced')

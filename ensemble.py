@@ -97,9 +97,9 @@ print("Cross validation accuracy scores: {:.5f} {:.5f}".format(np.mean(accuracy_
 # Save Kaggle submission files
 results = model.predict(test_data)  # Predicts from 1-10
 results_proba = model.predict_proba(test_data)
-construct_kaggle_submissions(ensemble['uid'], results, results_proba)
+construct_kaggle_submissions(ensemble['uid'] + "_Final=" + str(args.final), results, results_proba)
 
-model_file = open("models/{}.mdl".format(ensemble['uid']), "wb")
+model_file = open("models/{}.mdl".format(ensemble['uid'] + "_Final=" + str(args.final)), "wb")
 pickle.dump(model, model_file)
 
 if not args.final:

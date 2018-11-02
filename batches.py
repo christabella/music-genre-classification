@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 import tensorflow as tf
+from imblearn.over_sampling import SMOTE
 class Batches:
     data_train = pd.read_csv("data/train_data.csv", header=None)
     train_labels = pd.read_csv("data/train_labels.csv", header=None)
@@ -13,16 +14,17 @@ class Batches:
     batch_placement = 0
     oh_labels = []
 
-    def __init__(self,oh=True,feature_scaling=True):
+    def __init__(self,oh=True,feature_scaling=True,smote=True):
         self.data_train = self.data_train.values
         self.data_test = self.data_test.values
         self.train_labels = self.train_labels.values
         self.number_of_samples = self.data_train.shape[0]
+        if feature_scaling:
+            self.feature_scaling()
         if oh:
             self.one_hot()
             self.oh_labels = np.array(self.oh_labels)
-        if feature_scaling:
-            self.feature_scaling()
+
 
     def shuffle(self):
         a = self.data_train
@@ -98,9 +100,21 @@ class Batches:
         self.oh_labels = np.delete(self.oh_labels,indexes_got.flatten(),axis=0)
         self.number_of_samples = self.number_of_samples - number_test*10
 
+    def normal_train_test(self):
+        from sklearn.model_selection import train_test_split
+        self.data_train, self.data_test_splitted, \
+            self.train_labels, self.labels_test_splitted = train_test_split(
+            self.data_train,self.train_labels,test_size=0.3)
+        self.one_hot()
 
+        lbls = []
+        for lbl in self.labels_test_splitted:
+            current_lbl = np.zeros(10)
+            current_lbl[lbl - 1] = 1
+            lbls.append(current_lbl)
+        self.oh_test_splitted = np.array(lbls)
 
-
+        self.number_of_samples = self.data_train.shape[0]
     def feature_scaling(self):
         min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
         self.data_train = min_max_scaler.fit_transform(self.data_train)
@@ -110,8 +124,40 @@ class Batches:
         #self.data_train = np.array(self.data_train)
         #print(self.data_train.shape)
 
+    def kaggle_augment(self):
+        print(np.shape(self.data_train))
+        print(np.shape(self.train_labels))
+        means = []
+        min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
+        self.data_test = min_max_scaler.fit_transform(self.data_test)
+        for i in range(1,11):
+
+            current_data = [j for j in range(self.data_train.shape[0]) if self.train_labels[j] == i]
+            print(len(current_data))
+            current_data_train = self.data_train[current_data]
+            print(np.shape(current_data_train))
+            means.append(np.mean(current_data_train,axis=0))
+        means = np.array(means)
+        lbls = []
+        print(np.shape(self.data_test))
+        for kaggle_vector in self.data_test:
+            min_mean = np.linalg.norm(kaggle_vector-means[0])
+            mean_lbl = 0
+            for i in range(1,10):
+                if min_mean < np.linalg.norm(kaggle_vector-means[i]):
+                    min_mean = np.linalg.norm(kaggle_vector-means[i])
+                    mean_lbl = i
+            lbls.append(mean_lbl)
+        lbls = np.array(lbls)
+        print(lbls.shape)
+        a = np.zeros(10)
+        for lbl in lbls:
+            a[lbl]+=1
+        print(a)
+        print(np.sum(a))
+
     def model(self):
-        param_nr = 264
+        param_nr = 50
         self.data_train = self.data_train[:,:param_nr]
         self.data_test = self.data_test[:,:param_nr]
         self.data_test_splitted = self.data_test_splitted[:,:param_nr]
@@ -154,7 +200,6 @@ class Batches:
                 print(self.oh_labels[rand_nr])
                 print(self.train_labels[rand_nr])
 
-
     def model_2(self):
         param_nr = 264
         self.data_train = self.data_train[:, :param_nr]
@@ -169,12 +214,11 @@ class Batches:
         b_1 = tf.Variable(initial_b_1)
         o_1 = tf.matmul(x, W_1) + b_1
 
-        initial_W_2 = tf.truncated_normal([264,10],stddev=0.01)
+        initial_W_2 = tf.truncated_normal([264, 10], stddev=0.01)
         W_2 = tf.Variable(initial_W_2)
-        initial_b_2 = tf.constant(0.0,shape=[10])
+        initial_b_2 = tf.constant(0.0, shape=[10])
         b_2 = tf.Variable(initial_b_2)
-        y = (tf.matmul(o_1,W_2)+b_2)
-
+        y = (tf.matmul(o_1, W_2) + b_2)
 
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.04)
@@ -189,14 +233,14 @@ class Batches:
             output_, input_ = self.get_batch(100)
             sess.run(train, feed_dict={x: input_, y_: output_})
             if i % 1000 == 0:
-                predict = sess.run(y,feed_dict={x:self.data_test_splitted,y_:self.oh_test_splitted})
+                predict = sess.run(y, feed_dict={x: self.data_test_splitted, y_: self.oh_test_splitted})
                 sum_ = 0
                 for j in range(self.oh_test_splitted.shape[0]):
                     if np.argmax(self.oh_test_splitted[j]) == np.argmax(predict[j]):
                         sum_ = sum_ + 1
                 print("TEST on step " + str(i) + " :" + str(sum_ / 200))
 
-                predict = sess.run(y,feed_dict={x:self.data_train,y_:self.oh_labels})
+                predict = sess.run(y, feed_dict={x: self.data_train, y_: self.oh_labels})
                 sum_ = 0
                 for j in range(self.data_train.shape[0]):
                     if np.argmax(self.oh_labels[j]) == np.argmax(predict[j]):
@@ -206,40 +250,9 @@ class Batches:
                 print(self.oh_labels[rand_nr])
                 print(self.train_labels[rand_nr])
 
-
-# <----------------- Run these lines to test -------------->
-# a = Batches()
-# z = [1,2,3]
-# b = [1,2,3]
-# a.one_hot()
-# a.feature_scaling()
-# a.train_test_split()
-# a.model_2()
-# <----------------------------- ----------------------------->
+    def smote(self):
+        sm = SMOTE(random_state=2)
+        self.data_train,self.train_labels = sm.fit_sample(self.data_train,self.train_labels.ravel())
+        self.number_of_samples = self.data_train.shape[0]
 
 
-# print("oh_labels")
-# print(np.shape(a.oh_labels))
-# print("train_labels")
-# print(np.shape(a.train_labels))
-# print("data train")
-# print(np.shape(a.data_train))
-
-# print("oh_test")
-# print(np.shape(a.oh_test_splitted))
-# print("train_labels")
-# print(np.shape(a.labels_test_splitted))
-# print("data test")
-# print(np.shape(a.data_test_splitted))
-
-
-
-#for i in range(100):
-#    print("Iter no " + str(i))
-#    y, x = a.get_batch(1000)
-#    print(y.shape)
-#    print(x.shape)
-#    print(a.batch_placement)
-#    print("\n")
-
-# a.shuffle()
