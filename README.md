@@ -1,2 +1,4 @@
 # music-genre-classification
-MLBP project
+## Summary
+To tackle the problem of classifying the musical genre of songs based on "carefully chosen features", approaches using **support vector machines (SVM), Random Forest, XGBoost, and deep neural networks** were used. Data analysis showed high class imbalance in the dataset, and visualizations such as the correlation matrix of features, 3-dimensional PCA projection, and feature-class plots, indicate that many of the features are possibly non-informative and that classes are not easily separable. The class imbalance was not addressed directly in our final approach, since the Kaggle test data is similarly imbalanced and attempts to balance the classes gave worse results on the validation dataset. **Feature scaling**, on the other hand, improved most of the models' performance. On the Kaggle dataset, the best variants of all models ranged from **[60.2%-66.2% in accuracy](https://kaggle.com/c/mlbp-data-analysis-challenge-accuracy-2018) and [0.236-0.171 in log-loss](https://www.kaggle.com/c/mlbp-data-analysis-challenge-log-loss-2018)**, with XGBoost scoring the highest on both metrics.
+
