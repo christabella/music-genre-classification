@@ -19,6 +19,7 @@ args = parser.parse_args()
 def load_model(filename):
     return pickle.load(open(filename, 'rb'))
 
+
 RF_model = load_model('models/RandomForest_scaled=True_drop=False_remarks=Unweighted.mdl')
 XGB_model = load_model('models/XGBoost_scaled=False_n=100.mdl')
 SVC_model = load_model('models/SVC_scaled=True_drop=False_remarks=c=5.mdl')
@@ -26,11 +27,14 @@ final_RF_model = load_model('models/FINAL_RandomForest_scaled=True_drop=False_re
 final_XGB_model = load_model('models/FINAL_XGBoost_scaled=False_drop=False_remarks=5.mdl')
 final_SVC_model = load_model('models/FINAL_SVC_scaled=True_drop=False_remarks=5.mdl')
 
-unfitted_RF_model = RandomForestClassifier(bootstrap=True, criterion="entropy", max_features=0.4, min_samples_leaf=4, min_samples_split=12, n_estimators=100, verbose=3, class_weight='balanced')
+unfitted_RF_model = RandomForestClassifier(bootstrap=True, criterion="entropy", max_features=0.4,
+                                           min_samples_leaf=4, min_samples_split=12,
+                                           n_estimators=100, verbose=3, class_weight='balanced')
 unfitted_XGB_model = XGBClassifier(learning_rate=0.1, max_depth=5,
-                      min_child_weight=7, n_estimators=100, nthread=1, subsample=0.7,
-                      objective='multi:softprob', num_class=10)
-unfitted_SVC_model = CalibratedClassifierCV(LinearSVC(C=5.0, dual=False, loss="squared_hinge", penalty="l1", tol=1e-4, verbose=3))
+                                   min_child_weight=7, n_estimators=100, nthread=1, subsample=0.7,
+                                   objective='multi:softprob', num_class=10)
+unfitted_SVC_model = CalibratedClassifierCV(LinearSVC(C=5.0, dual=False, loss="squared_hinge",
+                                                      penalty="l1", tol=1e-4, verbose=3))
 
 ensembles = {
     'ensemble_rf_xgb': {
