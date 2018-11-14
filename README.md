@@ -1,5 +1,5 @@
 # Music Genre Classification
-The main report can be found in [`Report.ipynb`](https://github.com/christabella/music-genre-classification/blob/master/Report.ipynb) and it describes the end-to-end machine learning workflow including exploratory data visualizations, feature preprocessing, model selection, experiments and results, and analysis.
+[`Report.ipynb`](https://github.com/christabella/music-genre-classification/blob/master/Report.ipynb) describes the end-to-end machine learning workflow including exploratory data visualizations, feature preprocessing, model selection, experiments and results, and analysis.
 
 ## Summary
 To tackle the problem of classifying the musical genre of songs based on "carefully chosen features", approaches using **support vector machines (SVM), Random Forest, XGBoost, and deep neural networks** were used.
